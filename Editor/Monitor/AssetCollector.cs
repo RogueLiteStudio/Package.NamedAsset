@@ -1,0 +1,137 @@
+﻿using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+namespace NamedAsset.Editor
+{
+    public class AssetCollector : ScriptableSingleton<AssetCollector>
+    {
+        [System.Serializable]
+        public struct AssetRef
+        {
+            public string Name;
+            public string Path;
+        }
+        [System.Serializable]
+        public class Package
+        {
+            public string Name;
+            public bool IsDirty;
+            public List<AssetRef> Assets = new List<AssetRef>();
+        }
+        public List<Package> Packages = new List<Package>();
+
+        private void Awake()
+        {
+            Packages.Clear();
+            Refresh();
+        }
+
+        private void OnEnable()
+        {
+            AssetImportMonitor.Enable = true;
+        }
+        private void OnDisable()
+        {
+            AssetImportMonitor.Enable = false;
+        }
+
+        private void RefreshPackage(Package package, AssetPackage setting)
+        {
+            package.IsDirty = false;
+            var assets = setting.GetAssetPaths();
+            for (int i = 0; i < assets.Length; ++i)
+            {
+                if (!package.Assets.Exists(it=>it.Path == assets[i]))
+                {
+                    AssetRef assetRef = new AssetRef
+                    {
+                        Name = $"{setting.Name}/{System.IO.Path.GetFileNameWithoutExtension(assets[i])}",
+                        Path = assets[i]
+                    };
+                    package.Assets.Add(assetRef);
+                }
+            }
+        }
+
+        private void AssetNameCheck(Package package)
+        {
+            for (int i = 0; i < package.Assets.Count; ++i)
+            {
+                var asset = package.Assets[i];
+                for (int j = i+1; j < package.Assets.Count; ++j)
+                {
+                    if (asset.Name == package.Assets[j].Name)
+                    {
+                        Debug.LogError($"打包资源重名 {asset.Name}, 打包设置 {package.Name}, 重名资源: \n{asset.Path}\n{package.Assets[j]}");
+                    }
+                }
+            }
+        }
+
+        public void ForceRefresh()
+        {
+            Packages.Clear();
+            Refresh();
+        }
+
+        public void Refresh()
+        {
+            var settingPackages = AssetPackSetting.instance.Packages;
+            for (int i=Packages.Count-1; i>=0; --i)
+            {
+                var package = Packages[i];
+                int index = settingPackages.FindIndex(p => p.Name == package.Name);
+                if (index < 0)
+                {
+                    Packages.RemoveAt(i);
+                    continue;
+                }
+                var setting = settingPackages[index];
+                if (string.IsNullOrEmpty(setting.Name)
+                    || string.IsNullOrEmpty(setting.Path)
+                    || string.IsNullOrEmpty(setting.SearchPattern))
+                {
+                    Packages.RemoveAt(i);
+                    continue;
+                }
+                if (package.IsDirty)
+                {
+                    package.Assets.Clear();
+                    while (index >= 0)
+                    {
+                        RefreshPackage(package, settingPackages[index]);
+                        index = settingPackages.FindIndex(index+1, p => p.Name == package.Name);
+                    }
+                }
+            }
+            for (int i=0; i<settingPackages.Count; ++i)
+            {
+                var setting = settingPackages[i];
+                if (string.IsNullOrEmpty(setting.Name)
+                    || string.IsNullOrEmpty(setting.Path)
+                    || string.IsNullOrEmpty(setting.SearchPattern))
+                    continue;
+                var package = Packages.Find(p => p.Name == setting.Name);
+                if (package == null)
+                {
+                    package = new Package();
+                    package.Name = setting.Name;
+                    RefreshPackage(package, setting);
+                    Packages.Add(package);
+                    for (int j=i+1; j<settingPackages.Count; ++j)
+                    {
+                        if (settingPackages[j].Name == setting.Name)
+                        {
+                            RefreshPackage(package, settingPackages[j]);
+                        }
+                    }
+                }
+            }
+            for (int i = Packages.Count - 1; i >= 0; --i)
+            {
+                AssetNameCheck(Packages[i]);
+            }
+        }
+    }
+}
