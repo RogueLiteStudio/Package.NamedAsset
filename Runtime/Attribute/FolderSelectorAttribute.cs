@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace NamedAsset.Editor
+namespace NamedAsset
 {
     public class FolderSelectorAttribute : PropertyAttribute
     {
