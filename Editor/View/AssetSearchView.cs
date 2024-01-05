@@ -85,21 +85,13 @@ namespace NamedAsset.Editor
                         {
                             using (new GUILayout.VerticalScope())
                             {
-                                using (new GUILayout.HorizontalScope())
+                                if (GUILayout.Button(asset.Name))
                                 {
-                                    if (GUILayout.Button(asset.Name, EditorStyles.boldLabel))
-                                    {
-                                        Selected = asset.Name;
-                                        onSelect?.Invoke(asset.Name);
-                                    }
-                                    if (GUILayout.Button("复制", "Button", GUILayout.Width(64)))
-                                    {
-                                        EditorGUIUtility.systemCopyBuffer = asset.Name;
-                                    }
+                                    Selected = asset.Name;
+                                    onSelect?.Invoke(asset.Name);
                                 }
                                 if (asset.Asset)
                                     EditorGUILayout.ObjectField(asset.Asset, asset.Asset.GetType(), false);
-
                             }
                             if (asset.Preview && GUILayout.Button(asset.Preview, GUILayout.Width(64), GUILayout.Height(64)))
                             {
