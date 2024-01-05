@@ -19,6 +19,10 @@
 
         public string[] GetAssetPaths()
         {
+            if (string.IsNullOrEmpty(Name) 
+                || string.IsNullOrEmpty(Path) 
+                || string.IsNullOrEmpty(SearchPattern))
+                return new string[0];
             var files = System.IO.Directory.GetFiles(Path, SearchPattern, SearchOption);
             for (int i=0; i<files.Length; ++i)
             {

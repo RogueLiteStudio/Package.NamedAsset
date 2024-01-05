@@ -1,7 +1,9 @@
 {
     "name": "NamedAsset.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "NamedAsset.Runtime"
+    ],
     "includePlatforms": [
         "Editor"
     ],

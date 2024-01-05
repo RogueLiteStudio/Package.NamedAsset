@@ -21,6 +21,8 @@ namespace NamedAsset.Editor
         }
         public List<Package> Packages = new List<Package>();
 
+        private Dictionary<string, string> namedAssets = new Dictionary<string, string>();
+
         private void Awake()
         {
             Packages.Clear();
@@ -30,6 +32,7 @@ namespace NamedAsset.Editor
         private void OnEnable()
         {
             AssetImportMonitor.Enable = true;
+            RefreshNamedAssets();
         }
         private void OnDisable()
         {
@@ -54,6 +57,21 @@ namespace NamedAsset.Editor
             }
         }
 
+        private void RefreshNamedAssets()
+        {
+            namedAssets.Clear();
+            foreach (var p in Packages)
+            {
+                foreach (var a in p.Assets)
+                {
+                    if (!namedAssets.ContainsKey(a.Name))
+                    {
+                        namedAssets.Add(a.Name, a.Path);
+                    }
+                }
+            }
+        }
+
         private void AssetNameCheck(Package package)
         {
             for (int i = 0; i < package.Assets.Count; ++i)
@@ -67,6 +85,15 @@ namespace NamedAsset.Editor
                     }
                 }
             }
+        }
+
+        public string GetAssetPath(string assetName)
+        {
+            if (namedAssets.TryGetValue(assetName, out string path))
+            {
+                return path;
+            }
+            return null;
         }
 
         public void ForceRefresh()
@@ -132,6 +159,8 @@ namespace NamedAsset.Editor
             {
                 AssetNameCheck(Packages[i]);
             }
+
+            RefreshNamedAssets();
         }
     }
 }
