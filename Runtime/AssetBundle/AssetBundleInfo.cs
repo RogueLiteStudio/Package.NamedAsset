@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace NamedAsset
 {
@@ -16,14 +15,16 @@ namespace NamedAsset
     {
         public string Path;
         public Hash128 Hash;
-        public AssetBundle Bundle;
-        public BundleLoadState State;
-        public int DepnedenceComplateCount;
-        public List<AssetBundleInfo> Dependence = new List<AssetBundleInfo>();
+        public int Index;
+        public uint Crc;
+        public int[] DependenceIdx;
         public string[] AssetNames;
+        public int DepnedenceComplateCount;
+        public BundleLoadState State;
+        public AssetBundle Bundle;
         public NamedAssetRequest[] RequestList;
 
-        public bool IsDone => State > BundleLoadState.Loading && Dependence.Count == DepnedenceComplateCount;
+        public bool IsDone => State > BundleLoadState.Loading && DependenceIdx.Length == DepnedenceComplateCount;
 
         //重置操作，只是去掉引用，不做卸载操作
         public void Reset()

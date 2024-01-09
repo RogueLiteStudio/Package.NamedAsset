@@ -6,6 +6,7 @@ namespace NamedAsset
     {
         None,
         Loading,
+        NoneExist,
         LoadFailed,
         Loaded,
     }
@@ -13,6 +14,9 @@ namespace NamedAsset
     public class NamedAssetRequest : CustomYieldInstruction
     {
         internal Object asset;
+#if UNITY_EDITOR
+        internal bool isPrefab;
+#endif
         private System.Action<Object> onComplete;
         public AssetLoadState State { get; internal set; }
         public override bool keepWaiting => State <= AssetLoadState.Loading;
@@ -39,16 +43,33 @@ namespace NamedAsset
         internal void SetAsset(Object asset)
         {
             this.asset = asset;
-            State = AssetLoadState.Loaded;
+            State = asset ? AssetLoadState.Loaded : AssetLoadState.LoadFailed;
             var action = onComplete;
             onComplete = null;
             action?.Invoke(asset);
 
         }
 
+        public GameObject Instantiate(Transform parent)
+        {
+#if UNITY_EDITOR
+            if (isPrefab)
+            {
+                return UnityEditor.PrefabUtility.InstantiatePrefab(asset as GameObject, parent) as GameObject;
+            }
+#endif
+            if (asset is GameObject go)
+            {
+                return Object.Instantiate(go);
+            }
+            return null;
+        }
+
         public T GetAsset<T>() where T : Object
         {
             return asset as T;
         }
+
+        public static readonly NamedAssetRequest NoneExist = new NamedAssetRequest { State = AssetLoadState.NoneExist };
     }
 }

@@ -10,8 +10,11 @@ namespace NamedAsset
         {
             //AssetBundle包名，可能会带有XX/
             public string Name;
+            public UnityEngine.Hash128 Hash;
+            public uint Crc;
             //仅包含指定打包资源
-            public List<string> Assets = new List<string>();
+            public string[] Assets;
+            public string[] DirectDependencies;
         }
         [System.Serializable]
         public struct AssetInfo
@@ -20,7 +23,7 @@ namespace NamedAsset
             public string Name;
             public int Location;//BundleInde << 16 | AssetIndex
         }
-        //仅包含指定打包资源
+        //不记录不依赖任何资源的并且不是指定打包资源的Bundle
         public List<BundleInfo> Bundles = new List<BundleInfo>();
         public List<AssetInfo> Assets = new List<AssetInfo>();
     }

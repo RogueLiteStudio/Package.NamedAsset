@@ -2,7 +2,7 @@
 
 namespace NamedAsset
 {
-    internal class FileBundleLoadRequest : BundleLoadRequest
+    internal class MemoryBundleLoadTask : BundleLoadTask
     {
         private readonly AssetBundleCreateRequest createRequest;
         public override bool IsDone => createRequest.isDone;
@@ -12,10 +12,10 @@ namespace NamedAsset
             return createRequest.assetBundle;
         }
 
-        public FileBundleLoadRequest(string path, AssetBundleInfo info)
+        public MemoryBundleLoadTask(AssetBundleInfo info, byte[] bytes)
         {
             Info = info;
-            createRequest = AssetBundle.LoadFromFileAsync(path);
+            createRequest = AssetBundle.LoadFromMemoryAsync(bytes, info.Crc);
         }
     }
 }

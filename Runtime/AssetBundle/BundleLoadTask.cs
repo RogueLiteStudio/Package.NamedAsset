@@ -2,7 +2,7 @@
 
 namespace NamedAsset
 {
-    internal abstract class BundleLoadRequest
+    internal abstract class BundleLoadTask
     {
         public AssetBundleInfo Info;
         public abstract bool IsDone { get; }

@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 
 namespace NamedAsset
 {
-    internal class HttpBundleLoadRequest : BundleLoadRequest
+    internal class HttpBundleLoadTask : BundleLoadTask
     {
         private readonly UnityWebRequest webRequest;
         public override bool IsDone => webRequest.isDone;
@@ -12,7 +12,7 @@ namespace NamedAsset
         {
             return DownloadHandlerAssetBundle.GetContent(webRequest);
         }
-        public HttpBundleLoadRequest(string url, AssetBundleInfo info)
+        public HttpBundleLoadTask(string url, AssetBundleInfo info)
         {
             Info = info;
             webRequest = UnityWebRequestAssetBundle.GetAssetBundle(url, info.Hash, 0);

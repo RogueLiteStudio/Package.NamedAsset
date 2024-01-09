@@ -17,6 +17,7 @@ namespace NamedAsset.Editor
         public readonly Dictionary<string, string> NamedAssets = new Dictionary<string, string>();
         private readonly Dictionary<string, string> fileInBundle = new Dictionary<string, string>();
         private readonly string externalName;
+        private string exportPath;
 
         public AssetPackageBuilder()
         {
@@ -78,7 +79,9 @@ namespace NamedAsset.Editor
                 return;
             if (!Directory.Exists(targetPath))
                 Directory.CreateDirectory(targetPath);
-            ExportManifest(Path.Combine(targetPath, "AssetManifest.json"));
+            exportPath = targetPath;
+            if (!exportPath.EndsWith('/'))
+                exportPath += '/';
             HashSet<string> allDependence = new HashSet<string>();
             int step = 0;
             foreach (var kv in fileInBundle)
@@ -112,6 +115,8 @@ namespace NamedAsset.Editor
             var resutlt = BuildPipeline.BuildAssetBundles(targetPath, assetBundleBuilds, AssetPackSetting.instance.BuildOptions, EditorUserBuildSettings.activeBuildTarget);
             if (resutlt != null)
             {
+
+                ExportManifest(Path.Combine(targetPath, "AssetManifest.json"), resutlt);
                 HashSet<string> bundles = new HashSet<string>(resutlt.GetAllAssetBundlesWithVariant());
                 var files = Directory.GetFiles(targetPath, "*.*", SearchOption.AllDirectories);
                 foreach (var file in files)
@@ -137,21 +142,35 @@ namespace NamedAsset.Editor
             }
         }
 
-        private void ExportManifest(string path)
+        private void ExportManifest(string path, UnityEngine.AssetBundleManifest bundleManifest)
         {
+            //运行时使用AssetManifest不使用AssetBundleManifest，减少一次异步加载文件的开销
+            //打包时可以删除AssetBundleManifest
             AssetManifest assetManifest = new AssetManifest();
             //记录指定打包资源所在的Bundle
             foreach (var bundle in BundleInfos)
             {
-                AssetManifest.BundleInfo bundleInfo = new AssetManifest.BundleInfo();
-                bundleInfo.Name = bundle.Name;
-                bundleInfo.Assets = bundle.Assets;
+                var directDeps = bundleManifest.GetDirectDependencies(bundle.Name);
+                AssetManifest.BundleInfo bundleInfo = new AssetManifest.BundleInfo
+                {
+                    Name = bundle.Name,
+                    DirectDependencies = directDeps,
+                    Hash = bundleManifest.GetAssetBundleHash(bundle.Name),
+                };
+                string abPath = exportPath + bundle.Name;
+                if (BuildPipeline.GetCRCForAssetBundle(abPath, out uint crc))
+                {
+                    bundleInfo.Crc = crc;
+                }
+                if (!bundle.IsDependence)
+                    bundleInfo.Assets = bundle.Assets.ToArray();
                 assetManifest.Bundles.Add(bundleInfo);
             }
             //记录资源所在Bundle的索引
             foreach (var kv in NamedAssets)
             {
-                int bundleIdx = BundleInfos.FindIndex((b) => b.Name == fileInBundle[kv.Value]);
+                string bundleName = fileInBundle[kv.Value];
+                int bundleIdx = BundleInfos.FindIndex((b) => b.Name == bundleName);
                 int assetIdx = BundleInfos[bundleIdx].Assets.IndexOf(kv.Value);
                 AssetManifest.AssetInfo assetInfo = new AssetManifest.AssetInfo
                 {
