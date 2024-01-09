@@ -4,7 +4,7 @@ namespace NamedAsset
 {
     public interface IAssetProvider
     {
-        IEnumerable Initialize(IPathProvider pathProvider);
+        IEnumerable Initialize();
         NamedAssetRequest LoadAsset(string name);
 
         void Destroy();

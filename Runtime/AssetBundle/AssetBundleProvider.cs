@@ -12,10 +12,15 @@ namespace NamedAsset
         private readonly List<LoadBundleAssetTask> assetTasks = new List<LoadBundleAssetTask>();
         private readonly Queue<AssetBundleInfo> bundleQueue = new Queue<AssetBundleInfo>();
         private readonly List<BundleLoadTask> bundleTasks = new List<BundleLoadTask>();
-        private IPathProvider pathProvider;
-        public IEnumerable Initialize(IPathProvider pathProvider)
+        private readonly IPathProvider pathProvider;
+
+        public AssetBundleProvider(IPathProvider pathProvider)
         {
             this.pathProvider = pathProvider;
+        }
+
+        public IEnumerable Initialize()
+        {
             var file = pathProvider.GetAssetManifestPath();
             yield return AsyncFileUtil.ReadAssetManifest(file, (manifest) =>
             {
