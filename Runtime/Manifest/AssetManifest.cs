@@ -14,7 +14,7 @@ namespace NamedAsset
             public uint Crc;
             //仅包含指定打包资源
             public string[] Assets;
-            public string[] DirectDependencies;
+            public string[] Dependencies;
         }
         [System.Serializable]
         public struct AssetInfo

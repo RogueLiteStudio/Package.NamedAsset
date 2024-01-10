@@ -150,11 +150,11 @@ namespace NamedAsset.Editor
             //记录指定打包资源所在的Bundle
             foreach (var bundle in BundleInfos)
             {
-                var directDeps = bundleManifest.GetDirectDependencies(bundle.Name);
+                var allDeps = bundleManifest.GetAllDependencies(bundle.Name);
                 AssetManifest.BundleInfo bundleInfo = new AssetManifest.BundleInfo
                 {
                     Name = bundle.Name,
-                    DirectDependencies = directDeps,
+                    Dependencies = allDeps,
                     Hash = bundleManifest.GetAssetBundleHash(bundle.Name),
                 };
                 string abPath = exportPath + bundle.Name;

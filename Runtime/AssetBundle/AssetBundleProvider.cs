@@ -96,9 +96,9 @@ namespace NamedAsset
                     Crc = bundle.Crc
                 };
                 int depCount = 0;
-                if (bundle.DirectDependencies != null && bundle.DirectDependencies.Length > 0)
+                if (bundle.Dependencies != null && bundle.Dependencies.Length > 0)
                 {
-                    depCount = bundle.DirectDependencies.Length;
+                    depCount = bundle.Dependencies.Length;
                 }
                 info.DependenceIdx = new int[depCount];
                 if (bundle.Assets != null && bundle.Assets.Length > 0)
@@ -112,9 +112,9 @@ namespace NamedAsset
             {
                 var info = bundleInfos[i];
                 var bundle = manifest.Bundles[i];
-                for (int j = 0; j < bundle.DirectDependencies.Length; ++j)
+                for (int j = 0; j < bundle.Dependencies.Length; ++j)
                 {
-                    var idx = bundleInfos.FindIndex(it => it.Path == bundle.DirectDependencies[j]);
+                    var idx = bundleInfos.FindIndex(it => it.Path == bundle.Dependencies[j]);
                     info.DependenceIdx[j] = idx;
                 }
             }

@@ -6,13 +6,13 @@ namespace NamedAsset.Editor
     [EditorWindowTitle(title = "打包资源编辑器")]
     public class AssetPackSettingWindow : EditorWindow
     {
-
         [MenuItem("Window/打包资源编辑器")]
         public static void ShowWindow()
         {
             GetWindow<AssetPackSettingWindow>();
         }
 
+        public bool ForceBundle;
         public UnityEditor.Editor settingEditor;
         public Vector2 scrollPos;
         private void OnEnable()
@@ -21,6 +21,7 @@ namespace NamedAsset.Editor
             {
                 settingEditor = UnityEditor.Editor.CreateEditor(AssetPackSetting.instance);
             }
+            ForceBundle = EditorPrefs.GetBool("_forceBundle_");
         }
 
         private void OnGUI()
@@ -29,6 +30,18 @@ namespace NamedAsset.Editor
             {
                 scrollPos = scroll.scrollPosition;
                 settingEditor.OnInspectorGUI();
+            }
+            EditorGUI.BeginChangeCheck();
+            using(new GUILayout.HorizontalScope())
+            {
+                GUILayout.Label("编辑器模式使用AssetBundle方式加载");
+
+                ForceBundle = EditorGUILayout.Toggle(ForceBundle);
+                GUILayout.FlexibleSpace();
+            }
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorPrefs.SetBool("_forceBundle_", ForceBundle);
             }
             if (GUILayout.Button("Build AssetBundle"))
             {

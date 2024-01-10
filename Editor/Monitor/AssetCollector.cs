@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NamedAsset.Editor
 {
-    public class AssetCollector : ScriptableSingleton<AssetCollector>
+    public class AssetCollector : ScriptableSingleton<AssetCollector>, IAssetPackageInfoProvider
     {
         [System.Serializable]
         public struct AssetRef
@@ -161,6 +161,22 @@ namespace NamedAsset.Editor
             }
 
             RefreshNamedAssets();
+        }
+
+        public Dictionary<string, string> GetAllAssets()
+        {
+            Refresh();
+            return namedAssets;
+        }
+        [RuntimeInitializeOnLoadMethod]
+        static void OnInit()
+        {
+            //AssetCollector在不访问的时候就不创建
+            //如果是强制使用AssetBundle加载，就不需要AssetCollector
+            if (!EditorPrefs.GetBool("_forceBundle_"))
+            {
+                AssetManager.PackageInfo = instance;
+            }
         }
     }
 }

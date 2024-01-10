@@ -1,19 +1,21 @@
 ﻿using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace NamedAsset
 {
     internal class AssetDatabaseProvider : IAssetProvider, ITickable
     {
         public static int MaxLoadAssetCount = 10;
-        private Dictionary<string, string> assetPaths = new Dictionary<string, string>();
-        private Dictionary<string, NamedAssetRequest> assetRequests = new Dictionary<string, NamedAssetRequest>();
-        private Queue<string> assetLoadQueue = new Queue<string>();
+        private readonly Dictionary<string, string> assetPaths;
+        private readonly Dictionary<string, NamedAssetRequest> assetRequests = new Dictionary<string, NamedAssetRequest>();
+        private readonly Queue<string> assetLoadQueue = new Queue<string>();
 
         public AssetDatabaseProvider()
         {
-
+#if UNITY_EDITOR
+            assetPaths = AssetManager.PackageInfo.GetAllAssets();
+#endif
         }
 
         public IEnumerable Initialize()
@@ -26,15 +28,15 @@ namespace NamedAsset
 #if UNITY_EDITOR
             if (!assetRequests.TryGetValue(name, out var request))
             {
-                if (assetPaths.TryGetValue(name, out var path))
+                if (assetPaths.ContainsKey(name))
                 {
                     request = new NamedAssetRequest();
-                    request.isPrefab = path.EndsWith(".prefab");
                     assetRequests.Add(name, request);
                     assetLoadQueue.Enqueue(name);
                 }
                 else
                 {
+                    Debug.LogError($"load asset fail : {name}");
                     request = NamedAssetRequest.NoneExist;
                 }
             }
@@ -65,6 +67,7 @@ namespace NamedAsset
                 if (assetRequests.TryGetValue(name, out var request))
                 {
                     var asset = UnityEditor.AssetDatabase.LoadMainAssetAtPath(assetPaths[name]);
+                    request.isPrefab = asset is GameObject;
                     request.SetAsset(asset);
                     ++count;
                 }
