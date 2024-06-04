@@ -96,6 +96,22 @@ namespace NamedAsset.Editor
             return null;
         }
 
+        public string AssetToKey(Object asset)
+        {
+            string path = AssetDatabase.GetAssetPath(asset);
+            if (!string.IsNullOrEmpty(path))
+            {
+                foreach (var kv in namedAssets)
+                {
+                    if (kv.Value == path)
+                    {
+                        return kv.Key;
+                    }
+                }
+            }
+            return null;
+        }
+
         public void ForceRefresh()
         {
             Packages.Clear();
