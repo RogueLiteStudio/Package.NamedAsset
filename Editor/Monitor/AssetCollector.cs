@@ -87,11 +87,21 @@ namespace NamedAsset.Editor
             }
         }
 
-        public string GetAssetPath(string assetName)
+        public string GetAssetPath(string assetKey)
         {
-            if (namedAssets.TryGetValue(assetName, out string path))
+            if (namedAssets.TryGetValue(assetKey, out string path))
             {
                 return path;
+            }
+            return null;
+        }
+
+        public T LoadAsset<T>(string assetKey) where T : Object
+        {
+            var path = GetAssetPath(assetKey);
+            if (!string.IsNullOrEmpty(path))
+            {
+                return AssetDatabase.LoadAssetAtPath<T>(path);
             }
             return null;
         }
