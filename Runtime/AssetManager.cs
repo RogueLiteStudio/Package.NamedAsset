@@ -33,6 +33,11 @@ namespace NamedAsset
             yield return assetProvider.Initialize();
         }
 
+        public static NamedAssetRequest Load(string name)
+        {
+            return assetProvider?.LoadAsset(name);
+        }
+
         public static void Destroy()
         {
             assetProvider?.Destroy();

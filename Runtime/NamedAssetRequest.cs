@@ -60,7 +60,7 @@ namespace NamedAsset
 #endif
             if (asset is GameObject go)
             {
-                return Object.Instantiate(go);
+                return Object.Instantiate(go, parent);
             }
             return null;
         }
