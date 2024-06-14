@@ -1,9 +1,22 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace NamedAsset
 {
     public class AssetManager
     {
+        private static int keyIndex = 0;
+        private static readonly HashSet<int> unReleaseKey = new HashSet<int>();
+
+        internal static bool ReleaseKey(int key)
+        {
+            if (unReleaseKey.Contains(key))
+            {
+                unReleaseKey.Remove(key);
+                return true;
+            }
+            return false;
+        }
 
 #if UNITY_EDITOR
         public static IAssetPackageInfoProvider PackageInfo;
@@ -33,9 +46,29 @@ namespace NamedAsset
             yield return assetProvider.Initialize();
         }
 
-        public static NamedAssetRequest Load(string name)
+        public static NamedAsset Load(string name)
         {
-            return assetProvider?.LoadAsset(name);
+            var request = assetProvider?.LoadAsset(name);
+            if (request != null)
+            {
+                int key = ++keyIndex;
+                while (key == 0 || unReleaseKey.Contains(key))
+                {
+                    key = ++keyIndex;
+                }
+                unReleaseKey.Add(key);
+                return new NamedAsset
+                {
+                    Name = name,
+                    KeyIndex = ++keyIndex,
+                    request = request,
+                    Version = request != null ? request.Version : 0,
+                };
+            }
+            return new NamedAsset
+            {
+                Name = name
+            };
         }
 
         public static void Destroy()

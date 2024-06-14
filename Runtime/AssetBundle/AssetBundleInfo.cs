@@ -11,8 +11,14 @@ namespace NamedAsset
         Loaded,
     }
 
-    internal class AssetBundleInfo
+    internal interface IBundleOwner
     {
+        void ReleaseBundle(AssetBundleInfo bundle);
+    }
+
+    internal class AssetBundleInfo : IAssetOwner
+    {
+        public IBundleOwner Owner;
         public string Path;
         public Hash128 Hash;
         public int Index;
@@ -23,46 +29,53 @@ namespace NamedAsset
         public BundleLoadState State;
         public AssetBundle Bundle;
         public NamedAssetRequest[] RequestList;
+        public bool HasAssetLoaded { get; private set; }
+        public bool HasAsset => AssetNames != null;
 
         public bool IsDone => State > BundleLoadState.Loading && DependenceIdx.Length == DepnedenceComplateCount;
 
-        //重置操作，只是去掉引用，不做卸载操作
-        public void Reset()
+        public NamedAssetRequest GetAssetRequest(int index)
         {
-            if (RequestList != null)
+            //这里不做越界检查，如果越界了，说明上层调用有问题
+            var request = RequestList[index];
+            if (request == null)
             {
-                for (int i = 0; i < RequestList.Length; ++i)
+                request = new NamedAssetRequest
                 {
-                    var r = RequestList[i];
-                    if (r != null)
-                    {
-                        r.State = AssetLoadState.None;
-                        r.asset = null;
-                    }
-                }
+                    owner = this
+                };
+                RequestList[index] = request;
             }
+            request.refCount++;
+            HasAssetLoaded = true;
+            return request;
         }
 
-        public void Destroy()
+        public void ReleaseAsset(NamedAssetRequest request)
         {
-            Bundle.Unload(true);
-            DepnedenceComplateCount = 0;
-            Bundle = null;
-            State = default;
+            for (int i = 0; i < RequestList.Length; ++i)
+            {
+                var r = RequestList[i];
+                if (r != null && r.State > AssetLoadState.None)
+                    return;
+            }
+            HasAssetLoaded = false;
+            Owner.ReleaseBundle(this);
+        }
+
+        public void Unload()
+        {
             if (RequestList != null)
             {
                 for (int i = 0; i < RequestList.Length; ++i)
                 {
                     var r = RequestList[i];
-                    if (r != null)
-                    {
-                        r.State = AssetLoadState.None;
-                        r.asset = null;
-                    }
+                    r?.Unload();
                 }
             }
-            RequestList = null;
-            AssetNames = null;
+            Bundle.Unload(true);
+            Bundle = null;
+            State = default;
         }
     }
 }

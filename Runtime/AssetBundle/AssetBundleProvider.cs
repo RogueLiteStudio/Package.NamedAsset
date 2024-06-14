@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NamedAsset
 {
-    internal class AssetBundleProvider : IAssetProvider, ITickable
+    internal class AssetBundleProvider : IAssetProvider, ITickable, IBundleOwner
     {
         public static int MaxLoadBundleCount = 10;
 
@@ -13,6 +13,9 @@ namespace NamedAsset
         private readonly Queue<AssetBundleInfo> bundleQueue = new Queue<AssetBundleInfo>();
         private readonly List<BundleLoadTask> bundleTasks = new List<BundleLoadTask>();
         private readonly IPathProvider pathProvider;
+        private bool enableBundleUnload;
+        private BitArray bundleFlags;
+        private System.Text.StringBuilder logBuilder;
 
         public AssetBundleProvider(IPathProvider pathProvider)
         {
@@ -52,17 +55,12 @@ namespace NamedAsset
             int assetIdx = location & 0xFFFF;
             var info = bundleInfos[bundleIdx];
             CheckAndLoadBundle(info);
-            var request = info.RequestList[assetIdx];
-            if (request == null)
-            {
-                request = new NamedAssetRequest();
-                info.RequestList[assetIdx] = request;
-            }
+            var request = info.GetAssetRequest(assetIdx);
             if (CreateLoadAssetTask(info, assetIdx))
             {
                 AssetUpdateLoop.Instance.AddLoadTick(this);
             }
-            return info.RequestList[assetIdx];
+            return request;
         }
 
         private void CheckAndLoadBundle(AssetBundleInfo info)
@@ -85,11 +83,13 @@ namespace NamedAsset
 
         private void BuildBundleInfo(AssetManifest manifest)
         {
+            bundleFlags = new BitArray(manifest.Bundles.Count);
             for (int i=0; i< manifest.Bundles.Count; ++i)
             {
                 var bundle = manifest.Bundles[i];
                 AssetBundleInfo info = new AssetBundleInfo
                 {
+                    Owner = this,
                     Index = i,
                     Path = bundle.Name,
                     Hash = bundle.Hash,
@@ -185,15 +185,27 @@ namespace NamedAsset
                 if (task.IsDone)
                 {
                     var bundle = task.GetAssetBundle();
-                    task.Info.Bundle = bundle;
-                    task.Info.State = bundle ? BundleLoadState.Loaded : BundleLoadState.LoadFailed;
-                    OnBundleLoadComplete(task.Info);
+                    if (task.Info.State == BundleLoadState.Loading)
+                    {
+                        task.Info.Bundle = bundle;
+                        task.Info.State = bundle ? BundleLoadState.Loaded : BundleLoadState.LoadFailed;
+                        OnBundleLoadComplete(task.Info);
+                    }
+                    else
+                    {
+                        bundle.Unload(true);
+                    }
                     bundleTasks.RemoveAt(i);
                 }
             }
             while (bundleTasks.Count < MaxLoadBundleCount && bundleQueue.Count > 0)
             {
                 var info = bundleQueue.Dequeue();
+                if (info.State == BundleLoadState.None)
+                {
+                    //如果在队列中，但是状态为None，说明已经被卸载了
+                    continue;
+                }
                 info.State = BundleLoadState.Loading;
                 var task = AsyncFileUtil.LoadAssetBundle(pathProvider.GetAssetBundlePath(info.Path), info);
                 if (task == null)
@@ -216,7 +228,7 @@ namespace NamedAsset
                     assetTasks.RemoveAt(i);
                 }
             }
-
+            UnloadUnUsedBundle();
             return assetTasks.Count == 0 && bundleTasks.Count == 0;
         }
 
@@ -225,12 +237,92 @@ namespace NamedAsset
             AssetUpdateLoop.RemoveTick(this);
             foreach (var bundle in bundleInfos)
             {
-                bundle.Destroy();
+                bundle.Unload();
             }
             bundleInfos.Clear();
             bundleQueue.Clear();
             bundleTasks.Clear();
             assetTasks.Clear();
+        }
+
+        public void ReleaseBundle(AssetBundleInfo bundle)
+        {
+            enableBundleUnload = true;
+            AssetUpdateLoop.Instance.AddLoadTick(this);
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void RecordUnloadBundle(AssetBundleInfo bundle)
+        {
+            logBuilder ??= new System.Text.StringBuilder();
+            logBuilder.AppendLine(bundle.Path);
+        }
+
+        private void UnloadUnUsedBundle()
+        {
+            if (!enableBundleUnload)
+                return;
+            enableBundleUnload = false;
+            bundleFlags.SetAll(false);
+            //标记未使用的bundle(没有指定加载资源的bundle也)
+            for (int i=0; i<bundleInfos.Count; ++i)
+            {
+                var bundle = bundleInfos[i];
+                if (!bundle.HasAsset || !bundle.HasAssetLoaded)
+                {
+                    bundleFlags.Set(i, true);
+                }
+            }
+            //标记依赖的bundle
+            for (int i = 0; i < bundleInfos.Count; ++i)
+            {
+                if (!bundleFlags[i])
+                {
+                    var bundle = bundleInfos[i];
+                    if (bundle.DependenceIdx != null)
+                    {
+                        for (int j =0; j< bundle.DependenceIdx.Length; ++j)
+                        {
+                            bundleFlags.Set(bundle.DependenceIdx[j], false);
+                        }
+                    }
+                }
+            }
+            //卸载未使用的bundle
+            int unloadCount = 0;
+            for (int i = 0; i < bundleInfos.Count; ++i)
+            {
+                if (bundleFlags[i])
+                {
+                    var bundle = bundleInfos[i];
+                    if (bundle.State > BundleLoadState.None)
+                    {
+                        bundle.Unload();
+                        unloadCount++;
+                    }
+                }
+            }
+            if (unloadCount > 0 && logBuilder != null)
+            {
+                logBuilder.Insert(0, $"UnloadUnUsedBundleCount = {unloadCount}\n");
+                UnityEngine.Debug.Log(logBuilder.ToString());
+                logBuilder.Clear();
+            }
+            //重新计算依赖加载计数
+            for (int i = 0; i < bundleInfos.Count; ++i)
+            {
+                var bundle = bundleInfos[i];
+                if (bundle.DependenceIdx != null)
+                {
+                    for (int j = 0; j < bundle.DependenceIdx.Length; ++j)
+                    {
+                        if (bundleFlags[bundle.DependenceIdx[j]])
+                        {
+                            bundle.DepnedenceComplateCount--;
+                        }
+                    }
+                }
+            }
         }
     }
 }

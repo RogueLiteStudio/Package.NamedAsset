@@ -2,7 +2,7 @@
 
 namespace NamedAsset
 {
-    public interface IAssetProvider
+    internal interface IAssetProvider
     {
         IEnumerable Initialize();
         NamedAssetRequest LoadAsset(string name);
