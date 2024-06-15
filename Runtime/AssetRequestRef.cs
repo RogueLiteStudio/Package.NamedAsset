@@ -10,6 +10,7 @@ namespace NamedAsset
         public string Name { get; internal set; }
         internal NamedAssetRequest request;
         public readonly CustomYieldInstruction Request => request;
+        public readonly bool IsDone => request != null && request.State > AssetLoadState.Loading;
         public readonly bool Valid => request != null && Version == request.Version;
         public event System.Action<Object> OnComplete
         {
