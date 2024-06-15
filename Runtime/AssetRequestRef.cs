@@ -3,7 +3,7 @@
 namespace NamedAsset
 {
     //封装是为了防止重复释放
-    public struct NamedAsset : System.IEquatable<NamedAsset>
+    public struct AssetRequestRef : System.IEquatable<AssetRequestRef>
     {
         internal int Version;
         internal int KeyIndex;
@@ -45,14 +45,14 @@ namespace NamedAsset
             }
         }
 
-        public readonly bool Equals(NamedAsset other)
+        public readonly bool Equals(AssetRequestRef other)
         {
             return KeyIndex == other.KeyIndex && Name == other.Name;
         }
 
         public override readonly bool Equals(object obj)
         {
-            return obj is NamedAsset other && Equals(other);
+            return obj is AssetRequestRef other && Equals(other);
         }
 
         public override readonly int GetHashCode()
@@ -60,12 +60,12 @@ namespace NamedAsset
             return Name.GetHashCode() ^ KeyIndex;
         }
 
-        public static bool operator ==(NamedAsset left, NamedAsset right)
+        public static bool operator ==(AssetRequestRef left, AssetRequestRef right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(NamedAsset left, NamedAsset right)
+        public static bool operator !=(AssetRequestRef left, AssetRequestRef right)
         {
             return !left.Equals(right);
         }

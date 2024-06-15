@@ -46,7 +46,7 @@ namespace NamedAsset
             yield return assetProvider.Initialize();
         }
 
-        public static NamedAsset Load(string name)
+        public static AssetRequestRef Load(string name)
         {
             var request = assetProvider?.LoadAsset(name);
             if (request != null)
@@ -57,7 +57,7 @@ namespace NamedAsset
                     key = ++keyIndex;
                 }
                 unReleaseKey.Add(key);
-                return new NamedAsset
+                return new AssetRequestRef
                 {
                     Name = name,
                     KeyIndex = ++keyIndex,
@@ -65,7 +65,7 @@ namespace NamedAsset
                     Version = request != null ? request.Version : 0,
                 };
             }
-            return new NamedAsset
+            return new AssetRequestRef
             {
                 Name = name
             };
