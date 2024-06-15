@@ -146,7 +146,7 @@ namespace NamedAsset
         {
             foreach (var bundle in bundleInfos)
             {
-                if (bundle == info)
+                if (bundle == info || bundle.IsDone)
                     continue;
                 for (int i = 0; i < bundle.DependenceIdx.Length; ++i)
                 {
@@ -299,6 +299,7 @@ namespace NamedAsset
                     {
                         bundle.Unload();
                         unloadCount++;
+                        RecordUnloadBundle(bundle);
                     }
                 }
             }

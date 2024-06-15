@@ -56,7 +56,7 @@ namespace NamedAsset
             for (int i = 0; i < RequestList.Length; ++i)
             {
                 var r = RequestList[i];
-                if (r != null && r.State > AssetLoadState.None)
+                if (r != null && r.refCount > 0)
                     return;
             }
             HasAssetLoaded = false;
