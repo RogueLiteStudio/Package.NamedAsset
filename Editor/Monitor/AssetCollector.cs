@@ -119,6 +119,10 @@ namespace NamedAsset.Editor
                     }
                 }
             }
+            if (asset)
+            {
+                Debug.LogError($"资源未打包 : {asset.name} => {path}");
+            }
             return null;
         }
 
