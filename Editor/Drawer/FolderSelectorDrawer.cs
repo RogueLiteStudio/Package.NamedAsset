@@ -24,6 +24,20 @@ namespace NamedAsset.Editor
                 string path = EditorUtility.OpenFolderPanel("选择文件夹", value, "");
                 if (!string.IsNullOrEmpty(path))
                 {
+                    path = path.Replace('\\', '/');
+                    int index = path.IndexOf("Assets/");
+                    if (index >= 0)
+                    {
+                        path = path.Substring(index);
+                    }
+                    else
+                    {
+                        index = path.IndexOf("Packages/");
+                        if (index >= 0)
+                        {
+                            path = path.Substring(index);
+                        }
+                    }
                     property.stringValue = path;
                 }
             }
