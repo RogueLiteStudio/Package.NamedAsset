@@ -11,6 +11,7 @@ namespace NamedAsset
         internal NamedAssetRequest request;
         public readonly CustomYieldInstruction Request => request;
         public readonly bool IsDone => request != null && request.State > AssetLoadState.Loading;
+        public readonly bool IsSuccess => request != null && request.State == AssetLoadState.Loaded;
         public readonly bool Valid => request != null && Version == request.Version;
         public event System.Action<Object> OnComplete
         {
