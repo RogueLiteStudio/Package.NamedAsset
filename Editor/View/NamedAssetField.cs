@@ -30,14 +30,15 @@ namespace NamedAsset.Editor
             internal NamedAssetField assetField;
             public NamedAssetElement()
             {
+                //focusable = true;
                 style.flexDirection = FlexDirection.Row;
                 AddToClassList("unity-base-field__input");
                 AddToClassList("unity-object-field__input");
                 var element = new VisualElement();
                 {
                     Add(element);
-                    element.AddToClassList("unity-base-field__input");
-                    element.AddToClassList("unity-object-field__input");
+                    element.AddToClassList("unity-base-field__display");
+                    element.AddToClassList("unity-object-field__object");
                     element.Add(iconField);
                     iconField.pickingMode = PickingMode.Ignore;
                     iconField.scaleMode = ScaleMode.ScaleAndCrop;
@@ -63,7 +64,6 @@ namespace NamedAsset.Editor
             [EventInterest(new System.Type[]
             {
                 typeof(MouseDownEvent),
-                typeof(KeyDownEvent),
                 typeof(DragUpdatedEvent),
                 typeof(DragPerformEvent),
                 typeof(DragLeaveEvent)
@@ -74,13 +74,6 @@ namespace NamedAsset.Editor
                 if (evt is MouseDownEvent mouseDown && mouseDown.button == 0)
                 {
                     OnMouseDown(mouseDown);
-                }
-                else if(evt is KeyDownEvent keyDownEvent)
-                {
-                    if (keyDownEvent.keyCode == KeyCode.Delete || keyDownEvent.keyCode == KeyCode.Backspace)
-                    {
-                        OnKeyboardDelete();
-                    }
                 }
                 if (enabledInHierarchy)
                 {
@@ -118,12 +111,6 @@ namespace NamedAsset.Editor
 
                     evt.StopPropagation();
                 }
-            }
-            private void OnKeyboardDelete()
-            {
-                value = null;
-                Update();
-                assetField.OnValueChange(null);
             }
             private Object DNDValidateObject(out string key)
             {
@@ -216,12 +203,14 @@ namespace NamedAsset.Editor
 
         public NamedAssetField(string lable)
         {
+            focusable = true;
             style.flexDirection = FlexDirection.Row;
             labelElement.style.minWidth = 123f;
             labelElement.text = lable;
             Add(labelElement);
             namedAssetElement.assetField = this;
             Add(namedAssetElement);
+            AddToClassList("unity-base-field");
             AddToClassList(ussClassName);
             labelElement.AddToClassList("unity-base-field__label");
             labelElement.AddToClassList(labelUssClassName);
@@ -247,6 +236,20 @@ namespace NamedAsset.Editor
             _value = newValue;
             namedAssetElement.value = AssetCollector.instance.LoadAsset<Object>(newValue);
             namedAssetElement.Update();
+        }
+        [EventInterest(new System.Type[]
+        {
+            typeof(KeyDownEvent),
+        })]
+        protected override void HandleEventBubbleUp(EventBase evt)
+        {
+            if (evt is KeyDownEvent keyDown)
+            {
+                if (keyDown.keyCode == KeyCode.Delete || keyDown.keyCode == KeyCode.Backspace)
+                {
+                    OnValueChange(null);
+                }
+            }
         }
     }
 }

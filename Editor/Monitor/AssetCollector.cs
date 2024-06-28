@@ -19,7 +19,7 @@ namespace NamedAsset.Editor
             public bool IsDirty;
             public List<AssetRef> Assets = new List<AssetRef>();
         }
-        public readonly List<Package> Packages = new List<Package>();
+        public List<Package> Packages = new List<Package>();
         [SerializeField]
         private int version = 1;
         public int Version => version;
@@ -27,10 +27,15 @@ namespace NamedAsset.Editor
 
         private readonly Dictionary<string, string> namedAssets = new Dictionary<string, string>();
 
+        private void Awake()
+        {
+            ForceRefresh();
+        }
+
         private void OnEnable()
         {
             AssetImportMonitor.Enable = true;
-            ForceRefresh();
+            Refresh();
         }
         private void OnDisable()
         {
@@ -96,10 +101,13 @@ namespace NamedAsset.Editor
 
         public T LoadAsset<T>(string assetKey) where T : Object
         {
-            var path = GetAssetPath(assetKey);
-            if (!string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(assetKey))
             {
-                return AssetDatabase.LoadAssetAtPath<T>(path);
+                var path = GetAssetPath(assetKey);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    return AssetDatabase.LoadAssetAtPath<T>(path);
+                }
             }
             return null;
         }
