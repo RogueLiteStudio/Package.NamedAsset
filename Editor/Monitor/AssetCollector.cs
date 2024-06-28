@@ -19,20 +19,18 @@ namespace NamedAsset.Editor
             public bool IsDirty;
             public List<AssetRef> Assets = new List<AssetRef>();
         }
-        public List<Package> Packages = new List<Package>();
+        public readonly List<Package> Packages = new List<Package>();
+        [SerializeField]
+        private int version = 1;
+        public int Version => version;
 
-        private Dictionary<string, string> namedAssets = new Dictionary<string, string>();
 
-        private void Awake()
-        {
-            Packages.Clear();
-            Refresh();
-        }
+        private readonly Dictionary<string, string> namedAssets = new Dictionary<string, string>();
 
         private void OnEnable()
         {
             AssetImportMonitor.Enable = true;
-            RefreshNamedAssets();
+            ForceRefresh();
         }
         private void OnDisable()
         {
@@ -102,6 +100,18 @@ namespace NamedAsset.Editor
             if (!string.IsNullOrEmpty(path))
             {
                 return AssetDatabase.LoadAssetAtPath<T>(path);
+            }
+            return null;
+        }
+
+        public string AssetPathToKey(string path)
+        {
+            foreach (var kv in namedAssets)
+            {
+                if (kv.Value == path)
+                {
+                    return kv.Key;
+                }
             }
             return null;
         }
@@ -191,6 +201,7 @@ namespace NamedAsset.Editor
             }
 
             RefreshNamedAssets();
+            version++;
         }
 
         public Dictionary<string, string> GetAllAssets()

@@ -23,9 +23,9 @@ namespace NamedAsset.Editor
             GUI.color = color;
             if (GUI.Button(btnRect, EditorGUIUtility.TrIconContent("d_SearchOverlay")))
             {
-                AssetSearchPopup.Popup(position, property.stringValue);
+                NamedAssetSelectWindow.Show(position, property.stringValue);
             }
-            property.stringValue = AssetSearchPopup.GetSelectKey(property.stringValue, position);
+            property.stringValue = NamedAssetSelectWindow.GetSelectKey(property.stringValue, position);
             EditorGUI.EndProperty();
         }
     }
