@@ -170,10 +170,11 @@ namespace NamedAsset.Editor
                 EnableInClassList(acceptDropVariantUssClassName, enable: false);
             }
         }
-
+        /*
         public new class UxmlFactory : UxmlFactory<NamedAssetField, UxmlTraits>
         {
         }
+        */
         private readonly Label labelElement = new Label();
         private readonly NamedAssetElement namedAssetElement = new NamedAssetElement();
         private string _value;
